@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Học MSUTONG 4</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header>
+  <button onclick="toggleMode()">🌙</button>
+  <span id="title"></span>
+</header>
+
+<div class="wrap">
+
+<iframe id="pdf"></iframe>
+
+<div class="side">
+  <h3>🧠 Ghi chú</h3>
+  <textarea id="note"></textarea>
+
+  <button onclick="saveNote()">💾 Lưu ghi chú</button>
+  <button onclick="markDone()">✅ Đã học</button>
+
+  <h3>📚 Flashcard</h3>
+  <input id="fc_q" placeholder="Mặt trước">
+  <input id="fc_a" placeholder="Mặt sau">
+  <button onclick="addCard()">➕ Thêm</button>
+  <div id="cards"></div>
+
+  <audio id="audio" controls></audio>
+</div>
+
+</div>
+
+<script src="data/map.js"></script>
+<script src="js/main.js"></script>
+<script src="js/flashcard.js"></script>
+</body>
+</html>
