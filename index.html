@@ -1,31 +1,494 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<title>MSUTONG 4</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dang Tung | Frontend Engineer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  
+<style>
+:root {  
+  --bg-main: #050505;
+  --bg-card: rgba(20, 20, 20, 0.4);
+  --text-main: #ffffff;
+  --text-sub: #a1a1aa;  
+  --accent-1: #3b82f6; 
+  --accent-2: #8b5cf6; 
+  --border-color: rgba(255, 255, 255, 0.08);
+  --card-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+  --glass-blur: blur(24px);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {  
+  font-family: 'Inter', sans-serif;  
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  overflow-x: hidden;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection { background: var(--accent-1); color: #fff; }
+
+.noise {
+  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 999;
+}
+
+.ambient-light {
+  position: fixed; top: 20%; left: 30%; width: 50vw; height: 50vw;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.05) 40%, transparent 70%);
+  border-radius: 50%; filter: blur(80px); pointer-events: none; z-index: -1;
+  animation: pulse 10s ease-in-out infinite alternate;
+}
+@keyframes pulse { 0% { transform: scale(1); opacity: 0.8; } 100% { transform: scale(1.2); opacity: 1; } }
+
+nav {
+  position: fixed; top: 24px; left: 50%; transform: translateX(-50%);
+  background: rgba(10, 10, 10, 0.6); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+  padding: 8px; border-radius: 99px; border: 1px solid var(--border-color);
+  display: flex; gap: 4px; z-index: 100; box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+}
+.lang-btn {
+  background: transparent; border: none; color: var(--text-sub);
+  font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 500;
+  cursor: pointer; padding: 8px 20px; border-radius: 99px; transition: 0.3s;
+}
+.lang-btn:hover { color: var(--text-main); }
+.lang-btn.active { background: var(--text-main); color: #000; font-weight: 700; }
+
+#cards-container {
+  max-width: 1100px; margin: 120px auto 60px; padding: 0 24px;
+  display: grid; grid-template-columns: repeat(12, 1fr); gap: 20px;
+}
+
+.bento-card {  
+  background: var(--bg-card); border-radius: 24px; padding: 40px; 
+  border: 1px solid var(--border-color); position: relative; overflow: hidden;
+  display: flex; flex-direction: column;
+  opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.bento-card.show { opacity: 1; transform: translateY(0); }
+
+.bento-card::before, .bento-card::after {
+  content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  border-radius: inherit; opacity: 0; transition: opacity 0.5s; pointer-events: none;
+}
+.bento-card::before {
+  background: radial-gradient(800px circle at var(--mouse-x) var(--mouse-y), rgba(255, 255, 255, 0.06), transparent 40%);
+  z-index: 1;
+}
+.bento-card::after {
+  background: radial-gradient(600px circle at var(--mouse-x) var(--mouse-y), rgba(255, 255, 255, 0.4), transparent 40%);
+  z-index: -1;
+}
+#cards-container:hover .bento-card::before { opacity: 1; }
+.bento-card:hover::after { opacity: 1; }
+.bento-inner { background: #0a0a0a; border-radius: inherit; position: absolute; inset: 1px; z-index: -1; }
+
+.card-title {
+  font-family: 'JetBrains Mono', monospace; font-size: 12px; text-transform: uppercase; letter-spacing: 2px;
+  color: var(--accent-1); margin-bottom: 24px; font-weight: 600; display: flex; align-items: center; gap: 8px;
+}
+
+.hero-section { grid-column: span 12; flex-direction: row; align-items: center; justify-content: space-between; padding: 48px; }
+.about-section { grid-column: span 7; }
+.skills-section { grid-column: span 5; }
+.projects-section { grid-column: span 7; }
+.goals-section { grid-column: span 5; }
+.contact-section { grid-column: span 12; flex-direction: row; justify-content: space-between; align-items: center; padding: 32px 48px; background: linear-gradient(90deg, rgba(37, 99, 235, 0.1), transparent); }
+
+.hero-content { max-width: 650px; }
+.status-badge {
+  display: inline-flex; align-items: center; gap: 8px; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.2);
+  color: #4ade80; padding: 6px 16px; border-radius: 99px; font-size: 13px; font-weight: 500; margin-bottom: 20px;
+}
+.status-dot { width: 8px; height: 8px; background: #4ade80; border-radius: 50%; box-shadow: 0 0 10px #4ade80; animation: blink 2s infinite; }
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+#name { 
+  font-family: 'JetBrains Mono', monospace; 
+  font-size: 56px; 
+  font-weight: 800; 
+  margin-bottom: 8px; 
+  letter-spacing: -2px; 
+}
+
+.hero-info .role { font-family: 'JetBrains Mono', monospace; font-size: 18px; color: var(--text-sub); margin-bottom: 20px; display: inline-block; }
+.hero-info .slogan { font-size: 16px; color: var(--text-sub); line-height: 1.8; }
+
+.avatar-wrap {  
+  width: 180px; height: 180px; border-radius: 50%; padding: 4px; 
+  background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  box-shadow: 0 0 40px rgba(59, 130, 246, 0.3);
+}
+.avatar { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; border: 4px solid #050505; }
+
+.skill-item { margin-bottom: 16px; }
+.skill-info { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; font-weight: 500; }
+.skill-bar { width: 100%; height: 6px; background: rgba(255,255,255,0.05); border-radius: 99px; overflow: hidden; }
+.skill-fill { height: 100%; background: linear-gradient(90deg, var(--accent-1), var(--accent-2)); border-radius: 99px; transform: translateX(-100%); transition: transform 1.5s cubic-bezier(0.22, 1, 0.36, 1); }
+.bento-card.show .skill-fill { transform: translateX(0); }
+.soft-skills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+.soft-tag { background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 8px; font-size: 13px; color: var(--text-sub); }
+
+.projects-grid { display: flex; flex-direction: column; gap: 20px; }
+.project-item {
+  padding: 24px; border-radius: 16px; background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border-color); transition: 0.3s;
+  display: flex; gap: 20px; position: relative; overflow: hidden;
+}
+.project-item:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2); transform: translateY(-3px); }
+.p-icon { width: 48px; height: 48px; border-radius: 12px; background: rgba(59, 130, 246, 0.1); color: var(--accent-1); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.p-icon svg { width: 24px; height: 24px; }
+.p-info { flex: 1; }
+.p-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.p-header h3 { font-size: 17px; font-weight: 600; color: #fff; }
+.p-links a { color: var(--text-sub); transition: 0.3s; }
+.p-links a:hover { color: #fff; }
+.p-desc { font-size: 14px; color: var(--text-sub); margin-bottom: 12px; line-height: 1.5; }
+.p-tech { display: flex; gap: 8px; flex-wrap: wrap; }
+.tech-tag { font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 4px 8px; background: rgba(255,255,255,0.05); border-radius: 4px; color: #d4d4d8; }
+
+.timeline { position: relative; padding-left: 24px; }
+.timeline::before { content: ""; position: absolute; left: 5px; top: 0; bottom: 0; width: 1px; background: var(--border-color); }
+.time-item { position: relative; margin-bottom: 32px; }
+.time-item:last-child { margin-bottom: 0; }
+.time-dot { position: absolute; left: -24px; top: 4px; width: 11px; height: 11px; background: #050505; border: 2px solid var(--accent-1); border-radius: 50%; }
+.time-item:hover .time-dot { background: var(--accent-1); box-shadow: 0 0 10px var(--accent-1); }
+.time-date { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--accent-1); margin-bottom: 4px; font-weight: 600; display: block; }
+.time-desc { font-size: 14px; color: var(--text-sub); line-height: 1.6; }
+
+.cta-title { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+.cta-sub { color: var(--text-sub); font-size: 15px; max-width: 400px; }
+.cta-buttons { display: flex; gap: 16px; }
+.btn-primary {
+  background: #fff; color: #000; padding: 12px 28px; border-radius: 99px;
+  font-weight: 600; text-decoration: none; transition: 0.3s; font-size: 15px; display: inline-flex; align-items: center; gap: 8px;
+}
+.btn-primary:hover { transform: scale(1.05); box-shadow: 0 0 20px rgba(255,255,255,0.3); }
+.btn-secondary {
+  background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1);
+  padding: 12px 28px; border-radius: 99px; font-weight: 500; text-decoration: none; transition: 0.3s; font-size: 15px;
+}
+.btn-secondary:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); }
+
+.controls { position: fixed; bottom: 32px; right: 32px; display: flex; flex-direction: column; gap: 12px; z-index: 99; }
+.ctrl-btn {
+  width: 48px; height: 48px; border-radius: 50%; background: rgba(20,20,20,0.6); backdrop-filter: var(--glass-blur); border: 1px solid var(--border-color);
+  color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s;
+}
+.ctrl-btn svg { width: 20px; height: 20px; stroke-width: 2px; }
+.ctrl-btn:hover { background: #fff; color: #000; transform: scale(1.1); }
+
+@media (max-width: 950px) {
+  .hero-section, .about-section, .skills-section, .projects-section, .goals-section, .contact-section { grid-column: span 12; }
+  .hero-section { flex-direction: column-reverse; text-align: center; padding: 40px 24px; gap: 40px;}
+  .status-badge { margin: 0 auto 20px; }
+  .hero-info .role { justify-content: center; }
+  .contact-section { flex-direction: column; gap: 32px; text-align: center; }
+  .cta-sub { margin: 0 auto; }
+}
+</style>
 </head>
 <body>
 
-<h1>📘 MSUTONG 4</h1>
-<p id="progress"></p>
+<div class="noise"></div>
+<div class="ambient-light"></div>
 
-<div id="list"></div>
+<nav id="navbar">
+  <button class="lang-btn active" onclick="setLang('vi', this)">VI</button>
+  <button class="lang-btn" onclick="setLang('en', this)">EN</button>
+</nav>
 
-<script src="data/map.js"></script>
-<script src="js/progress.js"></script>
+<div id="cards-container">
+  
+  <div class="bento-card hero-section">
+    <div class="bento-inner"></div>
+    <div class="hero-content">
+      <div class="status-badge"><div class="status-dot"></div> <span id="statusText">Available for work</span></div>
+      <div class="hero-info">
+        <h1 id="name">Dang Tung</h1>
+        <div class="role"><span id="rolePrefix"></span><span id="roleType"></span><span style="animation: blink 1s infinite;">_</span></div>
+        <div class="slogan" id="slogan"></div>
+      </div>
+    </div>
+    <div class="avatar-wrap"><img src="avatar.jpg" class="avatar" alt="Dang Tung"></div>
+  </div>
+
+  <div class="bento-card about-section">
+    <div class="bento-inner"></div>
+    <div class="card-title">01 // TÓM TẮT CHUYÊN MÔN</div>
+    <p id="about" style="font-size: 15px; color: var(--text-sub); text-align: justify; line-height: 1.8;"></p>
+  </div>
+
+  <div class="bento-card skills-section">
+    <div class="bento-inner"></div>
+    <div class="card-title">02 // NĂNG LỰC KỸ THUẬT</div>
+    <div id="skillsContainer"></div>
+    <div class="soft-skills" id="softSkills"></div>
+  </div>
+
+  <div class="bento-card projects-section">
+    <div class="bento-inner"></div>
+    <div class="card-title">03 // DỰ ÁN THỰC CHIẾN</div>
+    <div class="projects-grid" id="projects"></div>
+  </div>
+
+  <div class="bento-card goals-section">
+    <div class="bento-inner"></div>
+    <div class="card-title">04 // LỘ TRÌNH PHÁT TRIỂN</div>
+    <div class="timeline" id="goals"></div>
+  </div>
+
+  <div class="bento-card contact-section">
+    <div class="bento-inner"></div>
+    <div>
+      <h2 class="cta-title" id="contactTitle"></h2>
+      <p class="cta-sub" id="contactSub"></p>
+    </div>
+    <div class="cta-buttons">
+      <a href="mailto:dvj1232005@gmail.com" class="btn-primary">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+        Send Email
+      </a>
+      <a href="https://facebook.com/tungnehhh" target="_blank" class="btn-secondary" id="socialBtn">Connect</a>
+    </div>
+  </div>
+
+</div>
+
+<audio id="bgMusic" loop><source src="music.mp3"></audio>
+
+<div class="controls">
+  <button class="ctrl-btn" onclick="toggleMusic()" id="musicBtn" title="Play/Pause Music">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path></svg>
+  </button>
+</div>
+
 <script>
-const list=document.getElementById("list");
-for(let i=1;i<=10;i++){
-  const done=localStorage.getItem("done_"+i);
-  list.innerHTML+=`
-  <div class="item" onclick="go(${i})">
-    Bài ${i} ${done?"✅":""}
-  </div>`;
+const iconWeb = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>`;
+const iconDB = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>`;
+const iconShop = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>`;
+
+const data = { 
+  vi: {  
+    status: "Sẵn sàng nhận việc / Freelance",
+    rolePrefix: "and I'm a ",
+    roles: ["Developer", "IOS", "Gamer", "Modder", "Youtube"],
+    slogan: "Kết hợp tư duy logic từ kỹ thuật và gu thẩm mỹ hiện đại để kiến tạo các sản phẩm Web tối ưu hiệu suất, mang lại trải nghiệm người dùng (UI/UX) vượt trội.",  
+    about: "Là một sinh viên có tinh thần làm chủ (ownership) và khả năng tự nghiên cứu sâu, tôi định hướng trở thành một Frontend Developer toàn diện. Nền tảng cốt lõi của tôi xoay quanh HTML, CSS, JavaScript thuần và tôi đang chuyển tiếp mạnh mẽ sang kiến trúc Component-based. Kinh nghiệm làm việc thực tế giúp tôi rèn luyện tư duy giải quyết vấn đề linh hoạt, khả năng giao tiếp kỹ thuật rõ ràng và luôn đặt mục tiêu tối ưu hóa giá trị sản phẩm lên hàng đầu.",
+    skills: [
+      { name: "HTML / CSS (Responsive, BEM)", percent: 80 },
+      { name: "JavaScript (ES6+, DOM, Fetch)", percent: 60 },
+      { name: "UI/UX Design & Prototyping", percent: 50 },
+      { name: "Git / Version Control", percent: 50 }
+    ],
+    softSkills: ["Problem Solving", "Teamwork", "Time Management", "Self-Taught"],
+    projects: [
+      { 
+        name: "Personal Portfolio v2.0", 
+        desc: "Phát triển Landing Page cá nhân với kiến trúc Glassmorphism. Tích hợp Intersection Observer cho hiệu ứng cuộn, quản lý State đa ngôn ngữ và Dark Mode.", 
+        tech: ["HTML5", "CSS3", "Vanilla JS", "DOM Manipulation"], 
+        icon: iconWeb 
+      },
+      { 
+        name: "CV Management Portal", 
+        desc: "Xây dựng hệ thống quản lý hồ sơ nhân sự động. Xử lý logic nhập/xuất form, kiểm thử dữ liệu (Data Validation) và render giao diện theo thời gian thực.", 
+        tech: ["JavaScript", "JSON", "State Management"], 
+        icon: iconDB 
+      },
+      { 
+        name: "E-Commerce Mini App", 
+        desc: "Thiết kế và lập trình nền tảng bán hàng tinh gọn. Tối ưu hóa layout bằng CSS Grid/Flexbox, xây dựng luồng tương tác cơ bản cho giỏ hàng.", 
+        tech: ["UI/UX Layout", "JS Event Handling"], 
+        icon: iconShop 
+      }
+    ],
+    goals: [
+      { time: "Ngắn hạn (1-2 năm)", text: "Nâng cao độ sâu của JavaScript. Thành thạo hệ sinh thái ReactJS/NextJS. Tham gia đóng góp vào các dự án thực tế của doanh nghiệp." },
+      { time: "Dài hạn (3-5 năm)", text: "Trở thành Senior Frontend Engineer. Nắm vững kiến trúc Web Performance, System Design và dẫn dắt phát triển các sản phẩm công nghệ quy mô lớn." }
+    ],
+    contactTitle: "Sẵn sàng kiến tạo giá trị?",  
+    contactSub: "Tôi luôn mở cửa đón nhận các cơ hội Thực tập, Fresher hoặc các dự án Freelance tiềm năng.",
+    socialBtn: "Kết nối Facebook"
+  }, 
+  en: {  
+    status: "Available for work / Freelance",
+    rolePrefix: "and I'm a ",
+    roles: ["Developer", "IOS", "Gamer", "Modder", "Youtube"],
+    slogan: "Fusing technical logic with modern aesthetics to architect high-performance web products and deliver exceptional user experiences (UI/UX).",  
+    about: "As a student with a strong sense of ownership and deep self-learning capabilities, my trajectory is set on becoming a versatile Frontend Developer. My core stack revolves around HTML, CSS, and Vanilla JavaScript, and I am actively transitioning into component-based architectures. Practical work experience has sharpened my agile problem-solving mindset, clear technical communication, and a relentless focus on maximizing product value.",
+    skills: [
+      { name: "HTML / CSS (Responsive, BEM)", percent: 80 },
+      { name: "JavaScript (ES6+, DOM, Fetch)", percent: 60 },
+      { name: "UI/UX Design & Prototyping", percent: 50 },
+      { name: "Git / Version Control", percent: 50 }
+    ],
+    softSkills: ["Problem Solving", "Teamwork", "Time Management", "Self-Taught"],
+    projects: [
+      { 
+        name: "Personal Portfolio v2.0", 
+        desc: "Developed a personal landing page featuring Glassmorphism architecture. Integrated Intersection Observer for scroll animations, multi-language state, and Dark Mode.", 
+        tech: ["HTML5", "CSS3", "Vanilla JS", "DOM"], 
+        icon: iconWeb 
+      },
+      { 
+        name: "CV Management Portal", 
+        desc: "Built a dynamic HR profile management system. Handled form input/output logic, data validation, and real-time interface rendering.", 
+        tech: ["JavaScript", "JSON", "State Management"], 
+        icon: iconDB 
+      },
+      { 
+        name: "E-Commerce Mini App", 
+        desc: "Designed and programmed a lean sales platform. Optimized layout using CSS Grid/Flexbox, built basic interaction flow for cart management.", 
+        tech: ["UI/UX Layout", "JS Event Handling"], 
+        icon: iconShop 
+      }
+    ],
+    goals: [
+      { time: "Short-term (1-2 years)", text: "Deepen JavaScript expertise. Master the ReactJS/NextJS ecosystem. Contribute directly to real-world enterprise projects." },
+      { time: "Long-term (3-5 years)", text: "Become a Senior Frontend Engineer. Master Web Performance architecture, System Design, and lead large-scale tech product developments." }
+    ],
+    contactTitle: "Ready to create value?",  
+    contactSub: "I am open to Internship, Fresher roles, or exciting Freelance opportunities.",
+    socialBtn: "Connect Facebook"
+  }
+};
+
+let currentLang = 'vi';
+let typingTimeout;
+let roleIndex = 0;
+let charIndex = 0;
+let isDeleting = false;
+let currentRoles = [];
+
+function typeRole() {
+  if (!currentRoles.length) return;
+  const currentRole = currentRoles[roleIndex];
+  const roleElement = document.getElementById("roleType");
+  
+  if (isDeleting) {
+    roleElement.innerHTML = currentRole.substring(0, charIndex - 1);
+    charIndex--;
+  } else {
+    roleElement.innerHTML = currentRole.substring(0, charIndex + 1);
+    charIndex++;
+  }
+
+  let typeSpeed = 100;
+  if (isDeleting) typeSpeed /= 2;
+
+  if (!isDeleting && charIndex === currentRole.length) {
+    typeSpeed = 2000; // Dừng lại ở cuối từ
+    isDeleting = true;
+  } else if (isDeleting && charIndex === 0) {
+    isDeleting = false;
+    roleIndex = (roleIndex + 1) % currentRoles.length;
+    typeSpeed = 500; // Chờ trước khi gõ từ tiếp theo
+  }
+
+  typingTimeout = setTimeout(typeRole, typeSpeed);
 }
-function go(i){location.href=`lesson.html?bai=${i}`;}
+
+function setLang(l, btnElement) { 
+  currentLang = l;
+  if(btnElement) {
+    document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+    btnElement.classList.add('active');
+  }
+
+  const d = data[l];
+  
+  document.getElementById("statusText").innerText = d.status; 
+  
+  document.getElementById("rolePrefix").innerText = d.rolePrefix;
+  
+  clearTimeout(typingTimeout);
+  document.getElementById("roleType").innerHTML = "";
+  currentRoles = d.roles;
+  roleIndex = 0;
+  charIndex = 0;
+  isDeleting = false;
+  typeRole();
+
+  document.getElementById("slogan").innerText = d.slogan; 
+  document.getElementById("about").innerText = d.about;
+  
+  document.getElementById("skillsContainer").innerHTML = d.skills.map(s => `
+    <div class="skill-item">
+      <div class="skill-info"><span>${s.name}</span> <span>${s.percent}%</span></div>
+      <div class="skill-bar"><div class="skill-fill" style="width: ${s.percent}%;"></div></div>
+    </div>
+  `).join("");
+  
+  document.getElementById("softSkills").innerHTML = d.softSkills.map(s => `<span class="soft-tag">${s}</span>`).join("");
+  
+  document.getElementById("projects").innerHTML = d.projects.map(p => `
+    <div class="project-item">
+      <div class="p-icon">${p.icon}</div>
+      <div class="p-info">
+        <div class="p-header">
+          <h3>${p.name}</h3>
+          <div class="p-links">
+            <a href="#" title="View Source"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18"><path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg></a>
+          </div>
+        </div>
+        <p class="p-desc">${p.desc}</p>
+        <div class="p-tech">${p.tech.map(t => `<span class="tech-tag">${t}</span>`).join("")}</div>
+      </div>
+    </div>
+  `).join("");
+
+  document.getElementById("goals").innerHTML = d.goals.map(g => `
+    <div class="time-item">
+      <div class="time-dot"></div>
+      <span class="time-date">${g.time}</span>
+      <p class="time-desc">${g.text}</p>
+    </div>
+  `).join("");
+  
+  document.getElementById("contactTitle").innerText = d.contactTitle;
+  document.getElementById("contactSub").innerText = d.contactSub;
+  document.getElementById("socialBtn").innerText = d.socialBtn;
+}
+
+setLang("vi");
+
+document.getElementById("cards-container").onmousemove = e => {
+  for(const card of document.getElementsByClassName("bento-card")) {
+    const rect = card.getBoundingClientRect(),
+          x = e.clientX - rect.left,
+          y = e.clientY - rect.top;
+    card.style.setProperty("--mouse-x", `${x}px`);
+    card.style.setProperty("--mouse-y", `${y}px`);
+  };
+}
+
+let play = false;
+const music = document.getElementById("bgMusic");
+function toggleMusic() {
+  const btn = document.getElementById('musicBtn');
+  if(play) { music.pause(); btn.style.opacity = "0.5"; } 
+  else { music.play(); btn.style.opacity = "1"; }
+  play = !play;
+}
+
+const observerOptions = { root: null, rootMargin: '0px', threshold: 0.15 };
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach((entry, index) => {
+    if (entry.isIntersecting) {
+      setTimeout(() => { entry.target.classList.add('show'); }, index * 100);
+      observer.unobserve(entry.target);
+    }
+  });
+}, observerOptions);
+
+document.querySelectorAll('.bento-card').forEach((card) => { observer.observe(card); });
+setTimeout(() => { document.querySelector('.hero-section').classList.add('show'); }, 100);
 </script>
 </body>
 </html>
